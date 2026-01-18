@@ -1,3 +1,6 @@
+🚀 Employee Management System  
+🔐 JWT Authentication & Role-Based Access Control  
+🛠 Spring Boot 3 | Java 17 | MySQL
 # Employee Management System
 
 A Spring Boot REST API with JWT-based authentication and role-based authorization.
