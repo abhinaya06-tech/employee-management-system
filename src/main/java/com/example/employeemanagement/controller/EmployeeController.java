@@ -4,6 +4,7 @@ import com.example.employeemanagement.dto.EmployeeDTO;
 import com.example.employeemanagement.response.ApiResponse;
 import com.example.employeemanagement.service.EmployeeService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,22 +20,22 @@ public class EmployeeController {
         this.employeeService = employeeService;
     }
 
-    // ================= READ (ADMIN ONLY) =================
+    // ================= READ (USER + ADMIN) =================
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public List<EmployeeDTO> getAllEmployees() {
         return employeeService.getAllEmployees();
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public EmployeeDTO getEmployeeById(@PathVariable Long id) {
         return employeeService.getEmployeeById(id);
     }
 
     @GetMapping("/search")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public ApiResponse<List<EmployeeDTO>> searchEmployees(
             @RequestParam String name) {
 
@@ -43,6 +44,19 @@ public class EmployeeController {
                 "Employees fetched successfully",
                 employeeService.searchEmployees(name)
         );
+    }
+
+    // ================= PAGINATION (USER + ADMIN) =================
+
+    @GetMapping("/page")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
+    public Page<EmployeeDTO> getEmployeesPaginated(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "asc") String direction
+    ) {
+        return employeeService.getEmployeesPaginated(page, size, sortBy, direction);
     }
 
     // ================= WRITE (ADMIN ONLY) =================

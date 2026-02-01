@@ -20,21 +20,25 @@ public class EmployeeService {
         this.employeeRepository = employeeRepository;
     }
 
-    // USER / ADMIN: create employee
+    // ================= CREATE =================
+    // ADMIN ONLY (enforced at controller level)
     public EmployeeDTO saveEmployee(EmployeeDTO dto) {
         Employee employee = EmployeeMapper.toEntity(dto);
         return EmployeeMapper.toDTO(employeeRepository.save(employee));
     }
 
-    // USER / ADMIN: get by id
+    // ================= READ =================
+    // USER + ADMIN
     public EmployeeDTO getEmployeeById(Long id) {
         Employee employee = employeeRepository.findById(id)
                 .orElseThrow(() ->
-                        new EmployeeNotFoundException("Employee not found with id " + id));
+                        new EmployeeNotFoundException(
+                                "Employee not found with id " + id
+                        ));
         return EmployeeMapper.toDTO(employee);
     }
 
-    // USER / ADMIN: get all (non-paginated)
+    // USER + ADMIN (non-paginated)
     public List<EmployeeDTO> getAllEmployees() {
         return employeeRepository.findAll()
                 .stream()
@@ -42,19 +46,23 @@ public class EmployeeService {
                 .collect(Collectors.toList());
     }
 
-    // USER / ADMIN: search
+    // USER + ADMIN (search)
     public List<EmployeeDTO> searchEmployees(String name) {
-        return employeeRepository.findByNameContainingIgnoreCase(name)
+        return employeeRepository
+                .findByNameContainingIgnoreCase(name)
                 .stream()
                 .map(EmployeeMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
-    // USER / ADMIN: update
+    // ================= UPDATE =================
+    // ADMIN ONLY
     public EmployeeDTO updateEmployee(Long id, EmployeeDTO dto) {
         Employee existing = employeeRepository.findById(id)
                 .orElseThrow(() ->
-                        new EmployeeNotFoundException("Employee not found with id " + id));
+                        new EmployeeNotFoundException(
+                                "Employee not found with id " + id
+                        ));
 
         existing.setName(dto.getName());
         existing.setEmail(dto.getEmail());
@@ -62,15 +70,19 @@ public class EmployeeService {
         return EmployeeMapper.toDTO(employeeRepository.save(existing));
     }
 
-    // ADMIN: delete
+    // ================= DELETE =================
+    // ADMIN ONLY
     public void deleteEmployee(Long id) {
         if (!employeeRepository.existsById(id)) {
-            throw new EmployeeNotFoundException("Employee not found with id " + id);
+            throw new EmployeeNotFoundException(
+                    "Employee not found with id " + id
+            );
         }
         employeeRepository.deleteById(id);
     }
 
-    // ADMIN: paginated list
+    // ================= PAGINATION =================
+    // ADMIN ONLY (used by AdminController)
     public Page<EmployeeDTO> getEmployeesPaginated(
             int page,
             int size,
