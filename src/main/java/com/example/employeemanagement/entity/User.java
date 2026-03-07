@@ -1,6 +1,7 @@
 package com.example.employeemanagement.entity;
 
 import jakarta.persistence.*;
+import java.util.Objects;
 
 @Entity
 @Table(name = "users")
@@ -10,25 +11,50 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false, unique = true, length = 100)
     private String username;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 255)
     private String password;
 
-    // IMPORTANT: store WITHOUT "ROLE_"
-    @Column(nullable = false)
-    private String role; // USER / ADMIN
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private Role role;
 
     public User() {}
+
+    public User(String username, String password, Role role) {
+        this.username = username;
+        this.password = password;
+        this.role = role;
+    }
+
+    public User(Long id, String username, String password, Role role) {
+        this.id = id;
+        this.username = username;
+        this.password = password;
+        this.role = role;
+    }
 
     public Long getId() { return id; }
     public String getUsername() { return username; }
     public String getPassword() { return password; }
-    public String getRole() { return role; }
+    public Role getRole() { return role; }
 
     public void setId(Long id) { this.id = id; }
     public void setUsername(String username) { this.username = username; }
     public void setPassword(String password) { this.password = password; }
-    public void setRole(String role) { this.role = role; }
+    public void setRole(Role role) { this.role = role; }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof User user)) return false;
+        return Objects.equals(id, user.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
 }

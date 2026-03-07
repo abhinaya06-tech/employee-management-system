@@ -8,8 +8,6 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -24,42 +22,44 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http)
+            throws Exception {
 
         http
                 .csrf(csrf -> csrf.disable())
+
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
+
                 .authorizeHttpRequests(auth -> auth
 
-                        // ================= PUBLIC =================
+                        // Public endpoints
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers(
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/v3/api-docs/**"
                         ).permitAll()
+                        .requestMatchers("/error").permitAll()
 
-                        // ================= ADMIN =================
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
-
-                        // ================= EMPLOYEE APIs =================
-                        // READ: USER + ADMIN
+                        // ROLE-BASED rules for employees
                         .requestMatchers(HttpMethod.GET, "/api/employees/**")
                         .hasAnyRole("USER", "ADMIN")
 
-                        // WRITE: ADMIN ONLY
-                        .requestMatchers(HttpMethod.POST, "/api/employees")
+                        .requestMatchers(HttpMethod.POST, "/api/employees/**")
                         .hasRole("ADMIN")
+
                         .requestMatchers(HttpMethod.PUT, "/api/employees/**")
                         .hasRole("ADMIN")
+
                         .requestMatchers(HttpMethod.DELETE, "/api/employees/**")
                         .hasRole("ADMIN")
 
-                        // ================= EVERYTHING ELSE =================
+                        // Everything else
                         .anyRequest().authenticated()
                 )
+
                 .addFilterBefore(
                         jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class
@@ -68,10 +68,10 @@ public class SecurityConfig {
         return http.build();
     }
 
-
     @Bean
     public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
+            AuthenticationConfiguration configuration
+    ) throws Exception {
+        return configuration.getAuthenticationManager();
     }
 }

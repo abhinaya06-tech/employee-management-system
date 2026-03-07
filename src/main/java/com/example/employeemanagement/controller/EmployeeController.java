@@ -5,13 +5,16 @@ import com.example.employeemanagement.response.ApiResponse;
 import com.example.employeemanagement.service.EmployeeService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/employees")
+@SecurityRequirement(name = "bearerAuth")
 public class EmployeeController {
 
     private final EmployeeService employeeService;
@@ -20,51 +23,39 @@ public class EmployeeController {
         this.employeeService = employeeService;
     }
 
-    // ================= READ (USER + ADMIN) =================
+    // ================= READ =================
 
     @GetMapping
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
-    public List<EmployeeDTO> getAllEmployees() {
-        return employeeService.getAllEmployees();
+    public ApiResponse<List<EmployeeDTO>> getAllEmployees() {
+        return new ApiResponse<>(
+                "SUCCESS",
+                "Employees fetched successfully",
+                employeeService.getAllEmployees()
+        );
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
-    public EmployeeDTO getEmployeeById(@PathVariable Long id) {
-        return employeeService.getEmployeeById(id);
-    }
-
-    @GetMapping("/search")
-    @PreAuthorize("hasAnyRole('USER','ADMIN')")
-    public ApiResponse<List<EmployeeDTO>> searchEmployees(
-            @RequestParam String name) {
-
+    public ApiResponse<EmployeeDTO> getEmployeeById(@PathVariable Long id) {
         return new ApiResponse<>(
                 "SUCCESS",
-                "Employees fetched successfully",
-                employeeService.searchEmployees(name)
+                "Employee fetched successfully",
+                employeeService.getEmployeeById(id)
         );
     }
 
-    // ================= PAGINATION (USER + ADMIN) =================
-
-    @GetMapping("/page")
-    @PreAuthorize("hasAnyRole('USER','ADMIN')")
-    public Page<EmployeeDTO> getEmployeesPaginated(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "5") int size,
-            @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "asc") String direction
-    ) {
-        return employeeService.getEmployeesPaginated(page, size, sortBy, direction);
-    }
-
-    // ================= WRITE (ADMIN ONLY) =================
-
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasRole('ADMIN')")
-    public EmployeeDTO createEmployee(@Valid @RequestBody EmployeeDTO dto) {
-        return employeeService.saveEmployee(dto);
+    public ApiResponse<EmployeeDTO> createEmployee(
+            @Valid @RequestBody EmployeeDTO dto) {
+
+        return new ApiResponse<>(
+                "SUCCESS",
+                "Employee created successfully",
+                employeeService.saveEmployee(dto)
+        );
     }
 
     @PutMapping("/{id}")
@@ -82,8 +73,14 @@ public class EmployeeController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public String deleteEmployee(@PathVariable Long id) {
+    public ApiResponse<Void> deleteEmployee(@PathVariable Long id) {
+
         employeeService.deleteEmployee(id);
-        return "Employee deleted successfully";
+
+        return new ApiResponse<>(
+                "SUCCESS",
+                "Employee deleted successfully",
+                null
+        );
     }
 }

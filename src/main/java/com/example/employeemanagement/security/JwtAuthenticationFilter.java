@@ -4,9 +4,11 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -15,18 +17,18 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
+    private static final Logger logger =
+            LoggerFactory.getLogger(JwtAuthenticationFilter.class);
+
     private final JwtUtil jwtUtil;
     private final UserDetailsService userDetailsService;
 
-    public JwtAuthenticationFilter(
-            JwtUtil jwtUtil,
-            UserDetailsService userDetailsService) {
+    public JwtAuthenticationFilter(JwtUtil jwtUtil,
+                                   UserDetailsService userDetailsService) {
         this.jwtUtil = jwtUtil;
         this.userDetailsService = userDetailsService;
     }
@@ -35,61 +37,50 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(
             HttpServletRequest request,
             HttpServletResponse response,
-            FilterChain filterChain)
-            throws ServletException, IOException {
+            FilterChain filterChain
+    ) throws ServletException, IOException {
 
-        String path = request.getServletPath();
+        String authHeader = request.getHeader("Authorization");
 
-        // Skip auth endpoints
-        if (path.startsWith("/auth/")) {
-            filterChain.doFilter(request, response);
-            return;
-        }
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
 
-        String header = request.getHeader("Authorization");
+            String token = authHeader.substring(7);
 
-        if (header == null || !header.startsWith("Bearer ")) {
-            filterChain.doFilter(request, response);
-            return;
-        }
+            try {
 
-        String token = header.substring(7);
-        String username;
+                String username = jwtUtil.extractUsername(token);
 
-        try {
-            username = jwtUtil.extractUsername(token);
-        } catch (Exception e) {
-            filterChain.doFilter(request, response);
-            return;
-        }
+                if (username != null &&
+                        SecurityContextHolder.getContext().getAuthentication() == null) {
 
-        if (username != null &&
-                SecurityContextHolder.getContext().getAuthentication() == null) {
+                    UserDetails userDetails =
+                            userDetailsService.loadUserByUsername(username);
 
-            UserDetails userDetails =
-                    userDetailsService.loadUserByUsername(username);
+                    if (jwtUtil.isTokenValid(token, userDetails)) {
 
-            if (jwtUtil.isTokenValid(token)) {
+                        UsernamePasswordAuthenticationToken authentication =
+                                new UsernamePasswordAuthenticationToken(
+                                        userDetails,
+                                        null,
+                                        userDetails.getAuthorities()
+                                );
 
-                // 🔴 THIS IS THE CRITICAL FIX
-                List<GrantedAuthority> authorities =
-                        userDetails.getAuthorities().stream()
-                                .map(a -> new SimpleGrantedAuthority(a.getAuthority()))
-                                .collect(Collectors.toList());
-
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(
-                                userDetails,
-                                null,
-                                authorities
+                        authentication.setDetails(
+                                new WebAuthenticationDetailsSource()
+                                        .buildDetails(request)
                         );
 
-                authentication.setDetails(
-                        new WebAuthenticationDetailsSource()
-                                .buildDetails(request));
+                        SecurityContextHolder.getContext()
+                                .setAuthentication(authentication);
+                    }
+                }
 
-                SecurityContextHolder.getContext()
-                        .setAuthentication(authentication);
+            } catch (Exception ex) {
+
+                SecurityContextHolder.clearContext();
+
+                logger.warn("JWT authentication failed: {}", ex.getMessage());
+
             }
         }
 

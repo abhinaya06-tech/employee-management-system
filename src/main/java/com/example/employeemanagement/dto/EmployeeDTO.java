@@ -14,24 +14,41 @@ public class EmployeeDTO {
     @Email(message = "Email should be valid")
     private String email;
 
-    public Long getId() {
-        return id;
+    // Required for JSON deserialization
+    public EmployeeDTO() {
     }
 
-    public void setId(Long id) {
+    // Constructor without ID (for create requests)
+    public EmployeeDTO(String name, String email) {
+        this.name = name;
+        this.email = email;
+    }
+
+    // Full constructor
+    public EmployeeDTO(Long id, String name, String email) {
         this.id = id;
+        this.name = name;
+        this.email = email;
+    }
+
+    public Long getId() {
+        return id;
     }
 
     public String getName() {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
     public String getEmail() {
         return email;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public void setEmail(String email) {

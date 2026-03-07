@@ -5,19 +5,23 @@ import com.example.employeemanagement.entity.Employee;
 
 public class EmployeeMapper {
 
+    private EmployeeMapper() {
+        // prevent instantiation
+    }
+
+    // Used for CREATE operations (no ID set)
     public static Employee toEntity(EmployeeDTO dto) {
-        Employee employee = new Employee();
-        employee.setId(dto.getId());
-        employee.setName(dto.getName());
-        employee.setEmail(dto.getEmail());
-        return employee;
+        return new Employee(
+                dto.getName(),
+                dto.getEmail()
+        );
     }
 
     public static EmployeeDTO toDTO(Employee employee) {
-        EmployeeDTO dto = new EmployeeDTO();
-        dto.setId(employee.getId());
-        dto.setName(employee.getName());
-        dto.setEmail(employee.getEmail());
-        return dto;
+        return new EmployeeDTO(
+                employee.getId(),
+                employee.getName(),
+                employee.getEmail()
+        );
     }
 }

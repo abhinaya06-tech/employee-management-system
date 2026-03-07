@@ -2,10 +2,13 @@ package com.example.employeemanagement.security;
 
 import com.example.employeemanagement.entity.User;
 import com.example.employeemanagement.repository.UserRepository;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
@@ -20,16 +23,17 @@ public class CustomUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username)
             throws UsernameNotFoundException {
 
-        User user = userRepository.findByUsername(username)
+        User user = userRepository
+                .findByUsernameIgnoreCase(username)
                 .orElseThrow(() ->
-                        new UsernameNotFoundException("User not found: " + username)
-                );
+                        new UsernameNotFoundException("Invalid credentials"));
 
-        return org.springframework.security.core.userdetails.User
-                .withUsername(user.getUsername())
-                .password(user.getPassword())
-                // 🔥 IMPORTANT: NO "ROLE_" HERE
-                .roles(user.getRole())
-                .build();
+        return new org.springframework.security.core.userdetails.User(
+                user.getUsername(),
+                user.getPassword(),
+                List.of(
+                        new SimpleGrantedAuthority("ROLE_" + user.getRole().name())
+                )
+        );
     }
 }

@@ -9,6 +9,7 @@ import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -16,29 +17,30 @@ public class EmployeeService {
 
     private final EmployeeRepository employeeRepository;
 
+    private static final Set<String> ALLOWED_SORT_FIELDS =
+            Set.of("id", "name", "email");
+
     public EmployeeService(EmployeeRepository employeeRepository) {
         this.employeeRepository = employeeRepository;
     }
 
-    // ================= CREATE =================
-    // ADMIN ONLY (enforced at controller level)
+    // CREATE
     public EmployeeDTO saveEmployee(EmployeeDTO dto) {
         Employee employee = EmployeeMapper.toEntity(dto);
         return EmployeeMapper.toDTO(employeeRepository.save(employee));
     }
 
-    // ================= READ =================
-    // USER + ADMIN
+    // READ BY ID
     public EmployeeDTO getEmployeeById(Long id) {
-        Employee employee = employeeRepository.findById(id)
+        return employeeRepository.findById(id)
+                .map(EmployeeMapper::toDTO)
                 .orElseThrow(() ->
                         new EmployeeNotFoundException(
                                 "Employee not found with id " + id
                         ));
-        return EmployeeMapper.toDTO(employee);
     }
 
-    // USER + ADMIN (non-paginated)
+    // READ ALL
     public List<EmployeeDTO> getAllEmployees() {
         return employeeRepository.findAll()
                 .stream()
@@ -46,7 +48,7 @@ public class EmployeeService {
                 .collect(Collectors.toList());
     }
 
-    // USER + ADMIN (search)
+    // SEARCH
     public List<EmployeeDTO> searchEmployees(String name) {
         return employeeRepository
                 .findByNameContainingIgnoreCase(name)
@@ -55,9 +57,9 @@ public class EmployeeService {
                 .collect(Collectors.toList());
     }
 
-    // ================= UPDATE =================
-    // ADMIN ONLY
+    // UPDATE
     public EmployeeDTO updateEmployee(Long id, EmployeeDTO dto) {
+
         Employee existing = employeeRepository.findById(id)
                 .orElseThrow(() ->
                         new EmployeeNotFoundException(
@@ -70,25 +72,29 @@ public class EmployeeService {
         return EmployeeMapper.toDTO(employeeRepository.save(existing));
     }
 
-    // ================= DELETE =================
-    // ADMIN ONLY
+    // DELETE (single DB call)
     public void deleteEmployee(Long id) {
-        if (!employeeRepository.existsById(id)) {
-            throw new EmployeeNotFoundException(
-                    "Employee not found with id " + id
-            );
-        }
-        employeeRepository.deleteById(id);
+        Employee existing = employeeRepository.findById(id)
+                .orElseThrow(() ->
+                        new EmployeeNotFoundException(
+                                "Employee not found with id " + id
+                        ));
+
+        employeeRepository.delete(existing);
     }
 
-    // ================= PAGINATION =================
-    // ADMIN ONLY (used by AdminController)
+    // PAGINATION
     public Page<EmployeeDTO> getEmployeesPaginated(
             int page,
             int size,
             String sortBy,
             String direction
     ) {
+
+        if (!ALLOWED_SORT_FIELDS.contains(sortBy)) {
+            sortBy = "id";
+        }
+
         Sort sort = direction.equalsIgnoreCase("desc")
                 ? Sort.by(sortBy).descending()
                 : Sort.by(sortBy).ascending();

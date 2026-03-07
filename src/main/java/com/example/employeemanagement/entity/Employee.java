@@ -1,8 +1,7 @@
 package com.example.employeemanagement.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
+import java.util.Objects;
 
 @Entity
 @Table(name = "employees")
@@ -12,37 +11,63 @@ public class Employee {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "Name cannot be empty")
-    @Column(nullable = false)
+    @Column(nullable = false, length = 100)
     private String name;
 
-    @Email(message = "Invalid email format")
-    @NotBlank(message = "Email cannot be empty")
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true, length = 150)
     private String email;
 
-    // ===== Getters & Setters =====
-    public Long getId() {
-        return id;
+    // Required by JPA
+    public Employee() {
     }
 
-    public void setId(Long id) {
+    // Constructor without ID
+    public Employee(String name, String email) {
+        this.name = name;
+        this.email = email;
+    }
+
+    // Full constructor
+    public Employee(Long id, String name, String email) {
         this.id = id;
+        this.name = name;
+        this.email = email;
+    }
+
+    public Long getId() {
+        return id;
     }
 
     public String getName() {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
     public String getEmail() {
         return email;
     }
 
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    // Important for JPA entity identity handling
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Employee employee)) return false;
+        return Objects.equals(id, employee.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 }

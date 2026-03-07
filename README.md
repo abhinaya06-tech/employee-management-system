@@ -1,81 +1,188 @@
-🚀 Employee Management System  
-🔐 JWT Authentication & Role-Based Access Control  
-🛠 Spring Boot 3 | Java 17 | MySQL
-# Employee Management System
+# 🚀 Employee Management System
 
-A Spring Boot REST API with JWT-based authentication and role-based authorization.
-
-This project demonstrates a secure backend system where **ADMIN** and **USER**
-roles have clearly separated access.
+Secure Spring Boot REST API with JWT Authentication and Role-Based Authorization.
 
 ---
 
-## Features
-
-- JWT Authentication (Login & Register)
-- Role-based Authorization (USER / ADMIN)
-- Secure REST APIs using Spring Security
-- CRUD operations for Employees
-- Admin-only management APIs
-- Global exception handling
-- DTO-based architecture
-- MySQL / H2 support
-- Swagger (OpenAPI) documentation
-
----
-
-## Tech Stack
+## 🛠 Tech Stack
 
 - Java 17
 - Spring Boot 3
 - Spring Security
-- JWT
+- JWT (jjwt 0.11.5)
 - Spring Data JPA
 - MySQL
-- Maven
-- Swagger (OpenAPI)
+- Swagger / OpenAPI
+- JUnit 5 + MockMvc
 
 ---
 
-## Roles & Permissions
+## 🔐 Security Architecture
 
-### USER
-- Login
-- View employees (READ only)
-- Cannot create, update, or delete employees
-
-### ADMIN
-- Login
-- Create employees
-- Update employees
-- Delete employees
-- View all employees
-- Access admin-only endpoints
+- Stateless JWT Authentication
+- BCrypt password hashing
+- Role-based authorization using `@PreAuthorize`
+- Enum-based role modeling (`Role.USER`, `Role.ADMIN`)
+- Global exception handling
+- Validation using Jakarta Bean Validation
 
 ---
 
-## API Endpoints
+## 👥 Roles & Permissions
 
-### Authentication
-- `POST /auth/register` → Register USER
-- `POST /auth/register-admin` → Register ADMIN (ADMIN only)
-- `POST /auth/login` → Login & get JWT token
+| Role  | Permissions |
+|-------|------------|
+| USER  | View employees |
+| ADMIN | Create, update, delete, and view employees |
 
-### Employee APIs
-- `GET /api/employees` → View employees (USER, ADMIN)
-- `GET /api/employees/{id}` → View employee by ID (USER, ADMIN)
-- `POST /api/employees` → Create employee (ADMIN only)
-- `PUT /api/employees/{id}` → Update employee (ADMIN only)
-- `DELETE /api/employees/{id}` → Delete employee (ADMIN only)
+Roles are implemented using a Java Enum:
 
-### Admin APIs
-- `GET /admin/employees` → View all employees (ADMIN only)
+```java
+public enum Role {
+    USER,
+    ADMIN
+}
+```
+
+Stored in database using:
+
+```java
+@Enumerated(EnumType.STRING)
+private Role role;
+```
+
+This prevents invalid role values and improves type safety.
 
 ---
 
-## Security
+## 🔑 Authentication Endpoints
 
-- JWT is required for all protected endpoints
-- Unauthorized access returns HTTP 403
-- Passwords are stored using BCrypt hashing
-- Stateless session management
+### Register USER
+POST `/auth/register`
+
+### Register ADMIN
+POST `/auth/register-admin`
+
+### Login
+POST `/auth/login`
+
+Returns JWT token.
+
+---
+
+## 📦 Employee Endpoints
+
+### Get All Employees
+GET `/api/employees`
+
+### Get Employee By ID
+GET `/api/employees/{id}`
+
+### Create Employee (ADMIN only)
+POST `/api/employees`
+
+### Update Employee (ADMIN only)
+PUT `/api/employees/{id}`
+
+### Delete Employee (ADMIN only)
+DELETE `/api/employees/{id}`
+
+### Search
+GET `/api/employees/search?name=John`
+
+### Pagination
+GET `/api/employees/page?page=0&size=5&sortBy=name&direction=asc`
+
+---
+
+## 🔐 Authorization
+
+JWT must be included in header:
+
+```
+Authorization: Bearer <token>
+```
+
+---
+
+## 📄 HTTP Status Codes
+
+- 200 → Success
+- 400 → Validation error
+- 401 → Unauthorized
+- 403 → Forbidden
+- 404 → Not found
+- 409 → Conflict
+- 500 → Internal server error
+
+---
+
+## 📘 Swagger
+
+Access:
+
+http://localhost:8080/swagger-ui.html
+
+Use the **Authorize** button to add your JWT token.
+
+---
+
+## 🧪 Testing
+
+Implemented using:
+
+- Spring Boot Test
+- MockMvc
+- Spring Security Test
+
+Covers:
+
+- Role-based access control
+- Validation failures
+- Unauthorized access
+- Admin permissions
+
+Run tests:
+
+```
+mvn test
+```
+
+---
+
+## 🏗 Architecture Highlights
+
+- DTO-based architecture
+- Mapper layer
+- Global exception handling
+- Enum-based role modeling
+- Secure stateless configuration
+- Clean layered structure
+
+---
+
+## ▶ Run Application
+
+```
+mvnw clean install
+mvnw spring-boot:run
+```
+
+---
+
+## 📌 Project Status
+
+✔ JWT Authentication  
+✔ Role-Based Authorization  
+✔ Enum-Based Role Modeling  
+✔ Employee CRUD  
+✔ Search & Pagination  
+✔ Validation  
+✔ Exception Handling  
+✔ Swagger Integration  
+✔ Integration Tests  
+✔ Clean Architecture
+
+---
+
+Built as a production-style backend system demonstrating secure REST API development with Spring Boot.
