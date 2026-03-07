@@ -44,7 +44,31 @@ public class EmployeeController {
                 employeeService.getEmployeeById(id)
         );
     }
+    @GetMapping("/page")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
+    public ApiResponse<Page<EmployeeDTO>> getEmployeesPaginated(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "asc") String direction) {
 
+        return new ApiResponse<>(
+                "SUCCESS",
+                "Employees fetched with pagination",
+                employeeService.getEmployeesPaginated(page, size, sortBy, direction)
+        );
+    }
+    @GetMapping("/search")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
+    public ApiResponse<List<EmployeeDTO>> searchEmployees(
+            @RequestParam String name) {
+
+        return new ApiResponse<>(
+                "SUCCESS",
+                "Search results",
+                employeeService.searchEmployees(name)
+        );
+    }
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasRole('ADMIN')")
